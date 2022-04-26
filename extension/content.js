@@ -40,12 +40,13 @@ const sendRequest = () => {
 }
 
 const timeout_handler = () => {
-  if (time_elapsed_ms <= 7.5 * 1000) {
-    sendRequest()
-    setTimeout(timeout_handler, INTERVAL_MS)
+  if (time_elapsed_ms > 7.5 * 1000) {
+    return
   }
   time_elapsed_ms += INTERVAL_MS
+  sendRequest()
   prev_mutations_observed = new_mutations_observed
+  setTimeout(timeout_handler, INTERVAL_MS)
 }
 
 observer.observe(document, {
