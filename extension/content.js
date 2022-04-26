@@ -40,11 +40,11 @@ const sendRequest = () => {
 }
 
 const timeout_handler = () => {
-  time_elapsed_ms += INTERVAL_MS
-  if (time_elapsed_ms <= 15 * 1000) {
+  if (time_elapsed_ms <= 7.5 * 1000) {
     sendRequest()
     setTimeout(timeout_handler, INTERVAL_MS)
   }
+  time_elapsed_ms += INTERVAL_MS
   prev_mutations_observed = new_mutations_observed
 }
 
