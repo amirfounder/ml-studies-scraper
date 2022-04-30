@@ -2,6 +2,7 @@ console.log('Content script starting ...' + new Date().toISOString())
 
 const INTERVAL_MS = 500
 const SESSION_ID = new Date().valueOf().toString()
+const PAGE_URL = window.location.href
 
 let time_elapsed_ms = 0
 let prev_mutations_observed = 0
@@ -15,9 +16,9 @@ const sendRequest = () => {
   const body = {
     scraped_at: new Date().toISOString(),
     html: new XMLSerializer().serializeToString(document),
-    url: window.location.href,
+    url: PAGE_URL,
     session_id: SESSION_ID,
-    page_changes_observed: new_mutations_observed - prev_mutations_observed > 0,
+    dom_changes_observed: new_mutations_observed - prev_mutations_observed,
     ms_elapsed_on_webpage: time_elapsed_ms
   }
   const headers = {
@@ -40,8 +41,8 @@ const sendRequest = () => {
 }
 
 const timeout_handler = () => {
-  if (time_elapsed_ms > 7.5 * 1000) {
-    return
+  if (time_elapsed_ms >= 10 * 1000 || !PAGE_URL.startsWith('http')) {
+    chrome?.runtime?.sendMessage({method: 'close_tab'})
   }
   time_elapsed_ms += INTERVAL_MS
   sendRequest()
