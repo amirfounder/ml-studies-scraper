@@ -25,7 +25,7 @@ def save_logs():
     extension_logger.log(messages, build_message=False)
 
     server_logger.success('Successfully logged new extension messages!')
-    return {'status': 'SUCCESS'}
+    return {'status': 'ok'}
 
 
 @app.route('/save-html', methods=["POST"])
@@ -40,10 +40,7 @@ def save_html():
 
     if dom_changes_observed < 20:
         server_logger.info(f"Aborted saving HTML - Not enough dom changes : {dom_changes_observed}")
-        return {
-            'status': 'ABORTED',
-            'reason': f'Aborted saving HTML - Not enough dom changes : {dom_changes_observed}'
-        }
+        return {'status': 'ok'}
 
     file = HtmlFile()
     file.contents = params.get('html')
@@ -67,4 +64,4 @@ def save_html():
         rss_entry.flush()
 
     server_logger.success("Successfully saved HTML")
-    return {'status': 'SUCCESS'}
+    return {'status': 'ok'}
