@@ -63,5 +63,5 @@ def save_html():
         rss_entry.has_been_scraped = True
         rss_entry.flush()
 
-    server_logger.success("Successfully saved HTML")
+    server_logger.success(f'Successfully saved HTML - "{entry.file_path}"')
     return {'status': 'ok'}

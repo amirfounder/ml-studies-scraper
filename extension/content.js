@@ -1,12 +1,12 @@
-const log = (message) => {
-  chrome?.runtime?.sendMessage({method: 'log', message})
-}
-
-log('Tab opened! Script starting ...')
-
 const INTERVAL_MS = 500
 const SESSION_ID = new Date().valueOf().toString()
 const PAGE_URL = window.location.href
+
+const log = (message) => {
+  chrome?.runtime?.sendMessage({method: 'log', message, session_id: SESSION_ID})
+}
+
+log('Tab opened! Script starting ...')
 
 let time_elapsed_ms = 0
 let prev_mutations_observed = 0
@@ -46,14 +46,19 @@ const sendRequest = () => {
 }
 
 const timeout_handler = () => {
-  if (time_elapsed_ms >= 10 * 1000 || !PAGE_URL.startsWith('http')) {
-    log('Script Complete! Closing tab ...')
-    chrome?.runtime?.sendMessage({method: 'close_tab'})
+  if (PAGE_URL.startsWith('http')) {
+    if (time_elapsed_ms >= 10 * 500) {
+      log('Script Complete! Closing tab ...')
+      chrome?.runtime?.sendMessage({method: 'flush_logs', session_id: SESSION_ID}, () => {
+        chrome?.runtime?.sendMessage({method: 'close_tab', session_id: SESSION_ID})
+      })
+    } else {
+      time_elapsed_ms += INTERVAL_MS
+      sendRequest()
+      prev_mutations_observed = new_mutations_observed
+      setTimeout(timeout_handler, INTERVAL_MS)
+    }
   }
-  time_elapsed_ms += INTERVAL_MS
-  sendRequest()
-  prev_mutations_observed = new_mutations_observed
-  setTimeout(timeout_handler, INTERVAL_MS)
 }
 
 observer.observe(document, {
