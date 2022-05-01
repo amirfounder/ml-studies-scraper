@@ -1,4 +1,7 @@
 from typing import List
+from flask import request
+
+from commons.logging import LoggerFactory
 
 from daos import (
     ScrapedHtmlFile as HtmlFile,
@@ -6,24 +9,47 @@ from daos import (
     ScrapingMethod as Method,
     RssEntryIndexEntry as RssEntry
 )
-from flask import request
 
 from .config import app
 
 
+server_logger = LoggerFactory.get_logger('scraper-server')
+extension_logger = LoggerFactory.get_logger('scraper-extension')
+
+
+@app.route('/save-logs', methods=["POST"])
+def save_logs():
+    params = request.json if request.is_json else {}
+    messages = '\n'.join(params.get('logs'))
+
+    extension_logger.log(messages, build_message=False)
+
+    server_logger.success('Successfully logged new extension messages!')
+    return {'status': 'SUCCESS'}
+
+
 @app.route('/save-html', methods=["POST"])
 def save_html():
+    server_logger.info('Request received for "/save-html"')
     method = Method.get_or_create(name='ml-studies-scraper')
 
     params = request.json if request.is_json else {}
+
+    url = params.get('url').split('?')[0]
+    dom_changes_observed = params.get('dom_changes_observed')
+
+    if dom_changes_observed < 20:
+        server_logger.info(f"Aborted saving HTML - Not enough dom changes : {dom_changes_observed}")
+        return {
+            'status': 'ABORTED',
+            'reason': f'Aborted saving HTML - Not enough dom changes : {dom_changes_observed}'
+        }
 
     file = HtmlFile()
     file.contents = params.get('html')
     file.flush()
 
     entry = Entry()
-
-    url = params.get('url').split('?')[0]
 
     entry.url = url
     entry.scraped_at = params.get('scraped_at')
@@ -40,4 +66,5 @@ def save_html():
         rss_entry.has_been_scraped = True
         rss_entry.flush()
 
+    server_logger.success("Successfully saved HTML")
     return {'status': 'SUCCESS'}
