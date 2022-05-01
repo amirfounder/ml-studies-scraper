@@ -1,4 +1,8 @@
-console.log('Content script starting ...' + new Date().toISOString())
+const log = (message) => {
+  chrome?.runtime?.sendMessage({method: 'log', message})
+}
+
+log('Tab opened! Script starting ...')
 
 const INTERVAL_MS = 500
 const SESSION_ID = new Date().valueOf().toString()
@@ -25,7 +29,8 @@ const sendRequest = () => {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "*"
   }
-  console.log(body, headers)
+
+  log('Sending request : ' + JSON.stringify({time_elapsed_ms, session_id: SESSION_ID, page_url: PAGE_URL }))
 
   fetch('http://localhost:8082/save-html', {
     method: 'POST',
@@ -42,6 +47,7 @@ const sendRequest = () => {
 
 const timeout_handler = () => {
   if (time_elapsed_ms >= 10 * 1000 || !PAGE_URL.startsWith('http')) {
+    log('Script Complete! Closing tab ...')
     chrome?.runtime?.sendMessage({method: 'close_tab'})
   }
   time_elapsed_ms += INTERVAL_MS
